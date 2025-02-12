@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"gDDNS/enum"
 	"gDDNS/internal/dns"
 	"io"
 	"log"
@@ -148,4 +149,8 @@ func (s SpaceShip) Delete(record dns.Record) error {
 		return err
 	}
 	return nil
+}
+
+func (s SpaceShip) PUT(record dns.Record) error {
+	return enum.UnSupportErr
 }
