@@ -1,0 +1,12 @@
+interval: 600
+ipSniffer:
+  addr: "ip.sb"
+domainRegisters:
+  - registerName: "SpaceShip"
+    key: ""
+    secret: ""
+    topLevelDomain: "xxx.xxx"
+    
+  - registerName: "NameCheap"
+    key: ""
+    topLevelDomain: "xxx.xxx"

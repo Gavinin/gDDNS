@@ -6,17 +6,16 @@ import (
 	"fmt"
 	"gDDNS/enum"
 	"gDDNS/internal/dns"
+	"gDDNS/internal/util"
 	"io"
 	"log"
 	"net/http"
-	"time"
 )
 
 type SpaceShip struct {
 	Key            string
 	Secret         string
 	TopLevelDomain string
-	c              *http.Client
 }
 
 type updateReq struct {
@@ -36,34 +35,25 @@ type deleteReq struct {
 	Address string `json:"address"`
 }
 
-type getGroup struct {
+type group struct {
 	Type string `json:"type"`
 }
 
-type getItem struct {
-	Address string   `json:"address"`
-	Name    string   `json:"name"`
-	Type    string   `json:"type"`
-	TTL     int      `json:"ttl"`
-	Group   getGroup `json:"group"`
+type item struct {
+	Address string `json:"address"`
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	TTL     int    `json:"ttl"`
+	Group   group  `json:"group"`
 }
 
-type getResponse struct {
-	Items []getItem `json:"items"`
-	Total int       `json:"total"`
+type listDomainsResponse struct {
+	Items []item `json:"items"`
+	Total int    `json:"total"`
 }
 
 func NewSpaceShip() *SpaceShip {
-	tr := &http.Transport{
-		MaxIdleConns:       3,
-		IdleConnTimeout:    30 * time.Second,
-		DisableCompression: true,
-	}
-
-	client := &http.Client{Transport: tr}
-	return &SpaceShip{
-		c: client,
-	}
+	return &SpaceShip{}
 }
 
 func (s SpaceShip) ListDomains() ([]dns.Record, error) {
@@ -71,7 +61,7 @@ func (s SpaceShip) ListDomains() ([]dns.Record, error) {
 	putReq, _ := http.NewRequest("GET", putURL, nil)
 	putReq.Header.Set("X-API-Key", s.Key)
 	putReq.Header.Set("X-API-Secret", s.Secret)
-	resp, err := s.c.Do(putReq)
+	resp, err := util.GetClient().Do(putReq)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
@@ -81,7 +71,7 @@ func (s SpaceShip) ListDomains() ([]dns.Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	var response *getResponse
+	var response *listDomainsResponse
 	err = json.Unmarshal(respBody, &response)
 	if err != nil {
 		return nil, err
@@ -98,6 +88,35 @@ func (s SpaceShip) ListDomains() ([]dns.Record, error) {
 }
 
 func (s SpaceShip) Update(record dns.Record) error {
+	return enum.UnSupportErr
+}
+
+func (s SpaceShip) Delete(record dns.Record) error {
+	putURL := "https://spaceship.dev/api/v1/dns/records/" + s.TopLevelDomain
+	req := []deleteReq{
+		{
+			Type:    record.RecordType,
+			Name:    record.Domain,
+			Address: record.IP,
+		},
+	}
+	reqJSON, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	putReq, _ := http.NewRequest("DELETE", putURL, bytes.NewBuffer(reqJSON))
+	putReq.Header.Set("X-API-Key", s.Key)
+	putReq.Header.Set("X-API-Secret", s.Secret)
+	putReq.Header.Set("Content-Type", "application/json")
+	_, err = util.GetClient().Do(putReq)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	return nil
+}
+
+func (s SpaceShip) PUT(record dns.Record) error {
 	putURL := "https://spaceship.dev/api/v1/dns/records/" + s.TopLevelDomain
 	req := updateReq{
 		Force: true,
@@ -118,7 +137,7 @@ func (s SpaceShip) Update(record dns.Record) error {
 	putReq.Header.Set("X-API-Key", s.Key)
 	putReq.Header.Set("X-API-Secret", s.Secret)
 	putReq.Header.Set("Content-Type", "application/json")
-	_, err = s.c.Do(putReq)
+	_, err = util.GetClient().Do(putReq)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -126,31 +145,6 @@ func (s SpaceShip) Update(record dns.Record) error {
 	return nil
 }
 
-func (s SpaceShip) Delete(record dns.Record) error {
-	putURL := "https://spaceship.dev/api/v1/dns/records/" + s.TopLevelDomain
-	req := []deleteReq{
-		{
-			Type:    record.RecordType,
-			Name:    record.Domain,
-			Address: record.IP,
-		},
-	}
-	reqJSON, err := json.Marshal(req)
-	if err != nil {
-		return err
-	}
-	putReq, _ := http.NewRequest("DELETE", putURL, bytes.NewBuffer(reqJSON))
-	putReq.Header.Set("X-API-Key", s.Key)
-	putReq.Header.Set("X-API-Secret", s.Secret)
-	putReq.Header.Set("Content-Type", "application/json")
-	_, err = s.c.Do(putReq)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-	return nil
-}
-
-func (s SpaceShip) PUT(record dns.Record) error {
-	return enum.UnSupportErr
+func (s SpaceShip) Name() string {
+	return string(enum.SpaceShip)
 }

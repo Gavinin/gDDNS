@@ -9,4 +9,5 @@ type Service interface {
 	Update(record dns.Record) error
 	PUT(record dns.Record) error
 	Delete(record dns.Record) error
+	Name() string
 }

@@ -1,8 +1,9 @@
 package dns
 
+import "gDDNS/internal/local"
+
 type Record struct {
-	IP         string
-	IPv6       string
+	IP         local.IP
 	Domain     string
 	RecordType string
 }
