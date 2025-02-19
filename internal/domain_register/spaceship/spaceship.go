@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gDDNS/enum"
 	"gDDNS/internal/dns"
+	"gDDNS/internal/local"
 	"gDDNS/internal/util"
 	"io"
 	"log"
@@ -79,7 +80,9 @@ func (s SpaceShip) ListDomains() ([]dns.Record, error) {
 	records := make([]dns.Record, len(response.Items))
 	for _, item := range response.Items {
 		records = append(records, dns.Record{
-			IP:         item.Address,
+			IP: local.IP{
+				IPv4: item.Address,
+			},
 			Domain:     item.Name,
 			RecordType: item.Type,
 		})
@@ -97,7 +100,7 @@ func (s SpaceShip) Delete(record dns.Record) error {
 		{
 			Type:    record.RecordType,
 			Name:    record.Domain,
-			Address: record.IP,
+			Address: record.IP.IPv4,
 		},
 	}
 	reqJSON, err := json.Marshal(req)
@@ -124,7 +127,7 @@ func (s SpaceShip) PUT(record dns.Record) error {
 			{
 				Type:    record.RecordType,
 				Name:    record.Domain,
-				Address: record.IP,
+				Address: record.IP.IPv4,
 				TTL:     60,
 			},
 		},
