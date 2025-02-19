@@ -63,3 +63,7 @@ func (n NameCheap) PUT(record dns.Record) error {
 func (n NameCheap) Delete(record dns.Record) error {
 	return enum.UnSupportErr
 }
+
+func (n NameCheap) Name() string {
+	return string(enum.NameCheap)
+}
